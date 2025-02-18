@@ -3,6 +3,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package Model;
+import ModelView.User;
 import java.util.concurrent.TimeUnit;
 import com.google.firebase.database.DataSnapshot;
 import com.google.auth.oauth2.GoogleCredentials;

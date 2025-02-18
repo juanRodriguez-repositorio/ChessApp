@@ -10,65 +10,88 @@ package Model;
  */
 import java.io.*;
 
+import java.io.*;
+
 public class StockFish {
+    private Process process;
+    private BufferedWriter writer;
+    private BufferedReader reader;
+
+    public StockFish() throws IOException {
+        // Inicia Stockfish como proceso
+        ProcessBuilder processBuilder = new ProcessBuilder("C:\\Users\\kamus\\Documents\\stockfish\\stockfish-windows-x86-64.exe");
+        processBuilder.redirectErrorStream(true);
+        process = processBuilder.start();
+
+        // Inicializa los flujos de entrada/salida
+        writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
+        reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+
+        // Envía el comando "uci" para activar el modo Universal Chess Interface (UCI)
+        writer.write("uci\n");
+        writer.flush();
+
+        // Espera la confirmación de Stockfish
+        String line;
+        while ((line = reader.readLine()) != null) {
+            if (line.contains("uciok")) break;
+        }
+    }
+
+    public String getEvaluation(String moves) throws IOException {
+        // Enviar la posición con los movimientos dados
+        writer.write("position startpos moves " + moves + "\n");
+        writer.flush();
+
+        // Pedir evaluación de Stockfish
+        writer.write("go depth 15\n");
+        writer.flush();
+
+        String bestMove = "N/A";
+        String evaluation = "N/A";
+
+        String line;
+        while ((line = reader.readLine()) != null) {
+            if (line.startsWith("info depth")) {
+                // Busca la evaluación numérica
+                if (line.contains("score cp")) {
+                    int evalIndex = line.indexOf("score cp") + 9;
+                    evaluation = line.substring(evalIndex).split(" ")[0];
+                    evaluation = String.format("%.2f", Double.parseDouble(evaluation) / 100.0); // Convierte centipawns a peones
+                } else if (line.contains("score mate")) {
+                    // Si hay una ventaja de mate inminente
+                    int evalIndex = line.indexOf("score mate") + 11;
+                    evaluation = "Mate in " + line.substring(evalIndex).split(" ")[0];
+                }
+            }
+            if (line.startsWith("bestmove")) {
+                bestMove = line.split(" ")[1]; // Extrae el mejor movimiento
+                break;
+            }
+        }
+
+        return "Mejor jugada: " + bestMove + " | Evaluación: " + evaluation;
+    }
+
+    public void close() throws IOException {
+        writer.write("quit\n");
+        writer.flush();
+        writer.close();
+        reader.close();
+    }
+
     public static void main(String[] args) {
-        // Ruta al ejecutable de Stockfish
-        String stockfishPath = "C:\\Users\\kamus\\Documents\\stockfish\\stockfish-windows-x86-64.exe";  // Cambia esto a tu ruta real
-
         try {
-            // Inicia el proceso de Stockfish
-            ProcessBuilder processBuilder = new ProcessBuilder(stockfishPath);
-            processBuilder.redirectErrorStream(true);  // Redirige errores a la misma salida
-            Process process = processBuilder.start();
+            String stockfishPath = "C:\\Users\\kamus\\Documents\\stockfish\\stockfish-windows-x86-64.exe";
+            StockFish stockfish = new StockFish();
 
-            // Flujo para escribir comandos a Stockfish
-            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
-            // Flujo para leer las respuestas de Stockfish
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            // Ejemplo de jugadas
+            String moves = "e2e4 e7e5 g1f3 b8c6";
+            String result = stockfish.getEvaluation(moves);
+            System.out.println(result);
 
-            // **1. Inicializa Stockfish en modo UCI**
-            writer.write("uci\n");
-            writer.flush();
-
-            // Lee y muestra las respuestas iniciales de Stockfish
-            String line;
-            while ((line = reader.readLine()) != null) {
-                System.out.println(line);  // Muestra la salida de Stockfish
-                if (line.contains("uciok")) {  // Espera hasta que Stockfish esté listo
-                    break;
-                }
-            }
-
-            // **2. Configura la posición inicial o una específica**
-            // Ejemplo: posición inicial con movimientos e4, e5, Nf3, Nc6
-            String positionCommand = "position startpos moves e2e4 e7e5 g1f3 b8c6\n";
-            writer.write(positionCommand);
-            writer.flush();
-
-            // **3. Pide a Stockfish que evalúe la posición**
-            writer.write("go depth 15\n");  // Evalúa con profundidad 20
-            writer.flush();
-
-            // Lee y procesa la salida de evaluación
-            while ((line = reader.readLine()) != null) {
-                System.out.println(line);
-                if (line.startsWith("bestmove")) {  // Salida final con la mejor jugada
-                    System.out.println("Evaluación completada: " + line);
-                    break;
-                }
-            }
-
-            // **4. Cierra Stockfish**
-            writer.write("quit\n");
-            writer.flush();
-
-            // Cierra los flujos y el proceso
-            writer.close();
-            reader.close();
-            process.waitFor();
-            System.out.println("Stockfish cerrado correctamente.");
-
-        } catch (IOException | InterruptedException e) {
+            stockfish.close();
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
