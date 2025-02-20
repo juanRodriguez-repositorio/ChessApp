@@ -38,13 +38,13 @@ public class StockFish {
         }
     }
 
-    public String getEvaluation(String moves) throws IOException {
+    public String[] getEvaluation(String fen) throws IOException {
         // Enviar la posición con los movimientos dados
-        writer.write("position startpos moves " + moves + "\n");
+        writer.write("position fen " + fen + "\n");
         writer.flush();
 
         // Pedir evaluación de Stockfish
-        writer.write("go depth 15\n");
+        writer.write("go movetime 3000\n");
         writer.flush();
 
         String bestMove = "N/A";
@@ -58,6 +58,7 @@ public class StockFish {
                     int evalIndex = line.indexOf("score cp") + 9;
                     evaluation = line.substring(evalIndex).split(" ")[0];
                     evaluation = String.format("%.2f", Double.parseDouble(evaluation) / 100.0); // Convierte centipawns a peones
+                    System.out.println("here"+evaluation);
                 } else if (line.contains("score mate")) {
                     // Si hay una ventaja de mate inminente
                     int evalIndex = line.indexOf("score mate") + 11;
@@ -70,7 +71,7 @@ public class StockFish {
             }
         }
 
-        return "Mejor jugada: " + bestMove + " | Evaluación: " + evaluation;
+        return new String[]{bestMove, evaluation};
     }
 
     public void close() throws IOException {
@@ -80,19 +81,5 @@ public class StockFish {
         reader.close();
     }
 
-    public static void main(String[] args) {
-        try {
-            String stockfishPath = "C:\\Users\\kamus\\Documents\\stockfish\\stockfish-windows-x86-64.exe";
-            StockFish stockfish = new StockFish();
-
-            // Ejemplo de jugadas
-            String moves = "e2e4 e7e5 g1f3 b8c6";
-            String result = stockfish.getEvaluation(moves);
-            System.out.println(result);
-
-            stockfish.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+    
 }

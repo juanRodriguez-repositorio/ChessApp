@@ -21,7 +21,7 @@ import java.util.List;
  * @author kamus
  */
 public class LichessAPI {
-    private static final String token="lip_CAGPDYEz2QeTwCwtUKRt";
+    private static final String token="lip_SKw4BXz3JhSe3YgN5Ij0";
     
     public static List<String> downloadUserGames(String username) {
         String url = "https://lichess.org/api/games/user/" + username;
