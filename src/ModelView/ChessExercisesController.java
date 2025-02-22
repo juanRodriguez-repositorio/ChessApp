@@ -9,6 +9,9 @@ import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.Locale;
 import View.ExercisesView;
+import Model.ChessExercises;
+import Model.ChessExercisesProvider;
+import View.ChessBoard;
 
 /**
  *
@@ -16,6 +19,8 @@ import View.ExercisesView;
  */
 public class ChessExercisesController {
     private static StockFish stockFish;
+    private static String bestMoveInActualPosition;
+    
     
     static {
         try {
@@ -25,24 +30,35 @@ public class ChessExercisesController {
             System.err.println("Error al iniciar StockFish");
         }
     }
-    public static void EvaluatePosition(String fenBefore, String fenAfter,ExercisesView window)throws ParseException{
+    public static void EvaluatePosition(String fenBefore, String fenAfter,String whoMove,ExercisesView window)throws ParseException{
        
         try {
             
             String[] evaluationBefore=stockFish.getEvaluation(fenBefore);
             String[] evaluationAfter=stockFish.getEvaluation(fenAfter);
-            System.out.println(evaluationBefore[1]);
-            System.out.println(evaluationAfter[1]);
-            window.endLoading();
             NumberFormat format = NumberFormat.getInstance(Locale.FRANCE);
-            if(Math.abs(format.parse(evaluationBefore[1]).doubleValue()-format.parse(evaluationAfter[1]).doubleValue())>1.5){
+            double evaluationNumberBefore=format.parse(evaluationBefore[1]).doubleValue();
+            double evaluationNumberAfter=format.parse(evaluationAfter[1]).doubleValue();
+            System.out.println(whoMove);
+            if(whoMove.equalsIgnoreCase("WHITE")){
+                System.out.println("here");
+                evaluationNumberAfter=evaluationNumberAfter*-1;
+            }else{
+                evaluationNumberBefore=evaluationNumberBefore*-1;
+            }
+            window.endLoading();
+            System.out.println("antes: "+evaluationNumberBefore);
+            System.out.println("despues: "+evaluationNumberAfter);
+            bestMoveInActualPosition=evaluationAfter[0];
+            if(Math.abs(evaluationNumberBefore-evaluationNumberAfter)>1.5){
                 System.out.println("opps... error");
                 System.out.println("mejor jugada: "+evaluationAfter[0]);
-                window.showMessage("opps... error"+"La mejor jugada en la posicion era: "+evaluationBefore[0]+" Evaluacion de la posicion: "+evaluationAfter[1]);
+                window.showMessage("opps... error"+"La mejor jugada en la posicion era: "+evaluationBefore[0]+" Evaluacion de la posicion: "+evaluationNumberAfter);
+                window.getBack(fenBefore);
             }else{
                 System.out.println("gran jugada");
                 System.out.println("mejor jugada: "+evaluationAfter[0]);
-                window.showMessage("gran jugada! "+"La mejor jugada en la posicion era: "+evaluationBefore[0]+ " Evaluacion de la posicion: "+evaluationAfter[1]);
+                window.showMessage("gran jugada! "+"La mejor jugada en la posicion era: "+evaluationBefore[0]+ " Evaluacion de la posicion: "+evaluationNumberAfter);
                 
             }
         } catch (IOException e) {
@@ -53,6 +69,29 @@ public class ChessExercisesController {
     
       
     
+    }
+    public static ChessExercises[] getExercises(int type){
+        ChessExercises[] exercises;
+        switch(type){
+            case 0:
+                exercises=ChessExercisesProvider.getTacticsExercises();
+                break;
+            case 1:
+                exercises=ChessExercisesProvider.getFinalsExercises();
+                break;
+            case 2:
+                exercises=ChessExercisesProvider.getMatesExercises();
+                break;
+            default:
+                exercises=null;
+            
+        }
+        return exercises;
+        
+    }
+    public static void doEngineMove(ChessBoard board){
+        board.doEngineMove(bestMoveInActualPosition);
+        
     }
     
     
