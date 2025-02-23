@@ -28,7 +28,10 @@ public class ExercisesView extends JFrame {
     private ChessExercises[] exercises;
     private ChessBoard chessBoard;
     private boolean isGettingBack;
-     private JButton backButton, machineMoveButton; 
+    private JButton backButton, machineMoveButton,resetButton,nextButton; 
+    private ChessExercises exerciseSelected;
+    private int index;
+    
     
     
 
@@ -36,7 +39,7 @@ public class ExercisesView extends JFrame {
         messageLabel = new JLabel("Selecciona una partida para comenzar.");
         setTitle("Chess Exercises");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(700, 700);
+        setSize(900, 700);
         setLayout(new BorderLayout(10, 10));
 
         // Panel del tablero de ajedrez
@@ -49,6 +52,11 @@ public class ExercisesView extends JFrame {
         matesButton=new JButton("Mates");
         backButton=new JButton("Atras");
         machineMoveButton=new JButton("Jugada de la maquina");
+        resetButton=new JButton("Reiniciar");
+        nextButton=new JButton("Siguente");
+        
+        resetButton.setEnabled(false);
+        nextButton.setEnabled(false);
         //eventos a los botones
         
         tacticsButton.addActionListener(e -> loadExercises(0));
@@ -56,6 +64,9 @@ public class ExercisesView extends JFrame {
         matesButton.addActionListener(e -> loadExercises(2));
         backButton.addActionListener(e -> goBackInHistoral());
         machineMoveButton.addActionListener(e -> doEngineMove());
+        resetButton.addActionListener(e -> resetExercise());
+        nextButton.addActionListener(e -> nextExercise());
+        machineMoveButton.setEnabled(false);
         
         // Modelo de lista y lista con scroll
         listModel = new DefaultListModel<>();
@@ -73,10 +84,15 @@ public class ExercisesView extends JFrame {
         gamesList.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2) { // Doble clic
-                    int index = gamesList.getSelectedIndex();
-                    chessBoard.updateBoard(exercises[index].getFen(),true);
+                    index = gamesList.getSelectedIndex();
+                    exerciseSelected=exercises[index];
+                    chessBoard.updateBoard(exerciseSelected.getFen(),true);
+                    ChessExercisesController.setStepsInExercise(exerciseSelected.getMovesForward(),chessBoard.getSideOfUser());
+                    setDisabledMoveMachine();
+                    resetButton.setEnabled(true);
+                    nextButton.setEnabled(false);
                     if (index != -1) {
-                        showMessage("Cargando " + listModel.getElementAt(index) + "...");
+                        showMessage("Vamos! "+exerciseSelected.getAim());
                     }
                 }
             }
@@ -103,6 +119,8 @@ public class ExercisesView extends JFrame {
         JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
         controlPanel.add(backButton);
         controlPanel.add(machineMoveButton);
+        controlPanel.add(resetButton);
+        controlPanel.add(nextButton);
         
         JPanel chessPanel = new JPanel(new BorderLayout());
         chessPanel.add(chessBoard, BorderLayout.CENTER);
@@ -200,10 +218,58 @@ public class ExercisesView extends JFrame {
     }
     private void goBackInHistoral(){
         System.out.println("click");
-        chessBoard.goBack();
+        chessBoard.goBack(this);
     }
     private void doEngineMove(){
         machineMoveButton.setEnabled(false);
         ChessExercisesController.doEngineMove(chessBoard);
     }
+    public void setEnabledMoveMachine(){
+        machineMoveButton.setEnabled(true);
+    }
+    public void setDisabledMoveMachine(){
+        machineMoveButton.setEnabled(false);
+    }
+    public void doEngineMoveInboard(String move){
+        chessBoard.doEngineMoveInBoard(move,this);
+    }
+    private void resetExercise(){
+        chessBoard.updateBoard(exerciseSelected.getFen(),true);
+        ChessExercisesController.setStepsInExercise(exerciseSelected.getMovesForward(),chessBoard.getSideOfUser());
+        nextButton.setEnabled(false);
+        backButton.setEnabled(true);
+        showMessage("Vamos! "+exerciseSelected.getAim());
+        chessBoard.setIsExerciseFinish(false);
+        
+    }
+    private void nextExercise(){
+        if (index < listModel.getSize() - 1) {
+            index++;
+            gamesList.setSelectedIndex(index);
+            gamesList.ensureIndexIsVisible(index);
+            exerciseSelected=exercises[index];
+            showMessage("Vamos! "+exerciseSelected.getAim());
+        } else {
+            JOptionPane.showMessageDialog(null, "Fin de la lista");
+        }
+    }
+    public void setResetButtonEnabled(){
+        resetButton.setEnabled(true);
+    }
+    public void setResetButtonDisabled(){
+        resetButton.setEnabled(false);
+    }
+    public void setNextButtonEnabled(){
+        nextButton.setEnabled(true);
+    }
+    public void setNextButtonDisabled(){
+        nextButton.setEnabled(false);
+    }
+    public void setBackButtonDisabled(){
+        backButton.setEnabled(false);
+    }
+    public void setBackButtonEnabled(){
+        backButton.setEnabled(true);
+    }
+    
 }

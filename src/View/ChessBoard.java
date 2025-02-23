@@ -22,6 +22,7 @@ import ModelView.ChessExercisesController;
 import java.text.ParseException;
 import java.util.ArrayList;
 
+
 public class ChessBoard extends JPanel implements MouseListener, MouseMotionListener {
     private Board board;
     private Map<Piece, Image> pieceImages;
@@ -36,6 +37,7 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
     private int fenHistoralIndex=0;
     private String fenBefore;
     private String fenAfter;
+    private boolean isExerciseFinish=false;
     
     
     public ChessBoard(String fen,ExercisesView container) {
@@ -132,7 +134,7 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
             System.out.println(targetSquare);
             System.out.println(board.legalMoves());
             System.out.println(selectedSquare.toString().toLowerCase());
-            doMove(move,selectedSquare.toString(),targetSquare.toString(),whoMove);
+            doMove(move,selectedSquare.toString(),targetSquare.toString(),whoMove,false);
         }
 
         selectedSquare = null;
@@ -170,50 +172,42 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
     public void setGettingBackInPosition(boolean isIt){
         isGettingBackInPosition=isIt;
     }
-    public void goBack(){
-        System.out.println("aquii");
-        System.out.println(fenHistoralIndex);
+    public void goBack(ExercisesView window){
         if(fenHistoralIndex!=0 && isGettingBackInPosition==false && isProcessing==false){
+            ChessExercisesController.goBackInSteps();
             System.out.println("tambien aqui");
             System.out.println(fenHistoralIndex);
-            fenHistoralIndex--;
             SwingUtilities.invokeLater(() -> {
-                updateBoard(fenHistoral.get(fenHistoralIndex),false); // Primera acción
+                updateBoard(fenHistoral.get(fenHistoralIndex-1),false); // Primera acción
                 deleteLastInHistoral();// Segunda acción
                 System.out.println("Movimiento revertido"); // Tercera acción
+                ChessExercisesController.resetMachineButton(board.getSideToMove().toString(),window);
+                containerView.showMessage("¿hacia atras en serio?, esta bien, hazlo de nuevo!");
 });
             
         }
          
     }
-    private void doMove(Move move,String fromSquare,String toSquare,String whoMove){
-        fenBefore=board.getFen().trim();
-        if (board.isMoveLegal(move, true) && verifyMove(fromSquare,toSquare) && isProcessing==false && isGettingBackInPosition==false) {
+    private void doMove(Move move,String fromSquare,String toSquare,String whoMove,boolean isEngine){
+        if(isEngine==false){
+            fenBefore=board.getFen().trim();
+        }
+        if (board.isMoveLegal(move, true) && verifyMove(fromSquare,toSquare) && isProcessing==false && isGettingBackInPosition==false && ChessExercisesController.canDoMove()) {
                 
                 try {
                     board.doMove(move);
                     fenAfter=board.getFen().trim();
                     fenHistoral.add(fenAfter);
                     fenHistoralIndex++;
+                    if(isEngine){
+                        System.out.println("deberia repintar aqui");
+                        repaint();
+                        return;
+                    }
                     System.out.println("suma  uno "+fenHistoralIndex);
                     System.out.println(board.getSideToMove().toString());
                      // Ejecutar Stockfish en segundo plano
-                    isProcessing=true;
-                    new SwingWorker<Void, Void>() {
-                        @Override
-                        protected Void doInBackground() throws Exception {
-                            containerView.showLoading();
-                            ChessExercisesController.EvaluatePosition(fenBefore, fenAfter,whoMove,containerView);
-                            return null;
-                        }
-
-                        @Override
-                        protected void done() {
-                            // Redibujar para limpiar la imagen colgada
-                            isProcessing=false;
-                            repaint();
-                        }
-                    }.execute();
+                     startingProcessOfDoMove(fenBefore,fenAfter,whoMove,isEngine);
                 } catch (MoveException ex) {
                     System.err.println("Movimiento inválido: " + ex.getMessage());
                 }
@@ -222,14 +216,49 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
         
     
     }
-    public void doEngineMove(String move){
-        System.out.println(move);
-        Square fromSquare=Square.valueOf(move.substring(0,2).toUpperCase());
-        Square toSquare=Square.valueOf(move.substring(2,4).toUpperCase());
-        Move moveEngine=new Move(fromSquare,toSquare);
-        String whoMove=board.getSideToMove().toString();
-        doMove(moveEngine,fromSquare.toString(),toSquare.toString(),whoMove);
-        SwingUtilities.invokeLater(()-> repaint());
+    private void startingProcessOfDoMove(String fenBefore, String fenAfter,String whoMove,boolean isEngine){
+        isProcessing=true;
+        containerView.setBackButtonDisabled();
+        containerView.setResetButtonDisabled();
+        new SwingWorker<Void, Void>() {
+            @Override
+            protected Void doInBackground() throws Exception {
+                containerView.showLoading();
+                System.out.println("en StaritingProcessOfDoMove es: "+isEngine);
+                ChessExercisesController.EvaluatePosition(fenBefore, fenAfter,whoMove,containerView,isEngine,ChessBoard.this);
+                return null;
+            }
+
+            @Override
+            protected void done() {
+               // Redibujar para limpiar la imagen colgada
+               if(isEngine==false){
+                   isProcessing=false;
+                   System.out.println("se Ejecuta");
+                   repaint();
+               }
+               if(isExerciseFinish==false){
+                       
+                    containerView.setBackButtonEnabled();
+                    containerView.setResetButtonEnabled();
+               }
+               
+            }
+        }.execute();
+    }
+    public void doEngineMove(){
+        String lastFen;
+        String secondLastFen;
+        String whoMove;
+        if (fenHistoral.size() >= 2) { // Asegurarse de que hay al menos dos elementos
+            lastFen = fenHistoral.get(fenHistoral.size() - 1);      // Último elemento
+            secondLastFen = fenHistoral.get(fenHistoral.size() - 2); // Penúltimo elemento
+        }else{
+            return;
+        }
+        whoMove=board.getSideToMove().toString();
+        startingProcessOfDoMove(secondLastFen,lastFen,whoMove,true);
+        
         
     }
     public void deleteLastInHistoral(){
@@ -238,6 +267,25 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
             fenHistoral.remove(fenHistoral.size() - 1);// Elimina el último elemento
             fenHistoralIndex--;
         }
+    }
+    public String getSideOfUser(){
+        return board.getSideToMove().toString();
+    }
+    public void doEngineMoveInBoard(String move,ExercisesView window){
+        System.out.println("en DoEngineMoveinBoard fffff");
+        System.out.println(move);
+        Square fromSquare=Square.valueOf(move.substring(0,2).toUpperCase());
+        Square toSquare=Square.valueOf(move.substring(2,4).toUpperCase());
+        System.out.println(fromSquare);
+        System.out.println(toSquare);
+        Move movement = new Move(fromSquare, toSquare);
+        String whoMove=board.getSideToMove().toString();
+        isProcessing=false;
+        doMove(movement,fromSquare.toString().toLowerCase().trim(),toSquare.toString().toLowerCase().trim(),whoMove,true);
+        
+    }
+    public void setIsExerciseFinish(boolean isIt){
+        isExerciseFinish=isIt;
     }
 
 

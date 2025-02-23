@@ -49,7 +49,7 @@ public class StockFish {
 
         String bestMove = "N/A";
         String evaluation = "N/A";
-
+        String evaluationMate="";
         String line;
         while ((line = reader.readLine()) != null) {
             if (line.startsWith("info depth")) {
@@ -61,8 +61,8 @@ public class StockFish {
                     System.out.println("here"+evaluation);
                 } else if (line.contains("score mate")) {
                     // Si hay una ventaja de mate inminente
-                    int evalIndex = line.indexOf("score mate") + 11;
-                    evaluation = "Mate in " + line.substring(evalIndex).split(" ")[0];
+                    int scoreMate = line.indexOf("score mate") + 11;
+                    evaluationMate = " mate en " + line.substring(scoreMate).split(" ")[0];
                 }
             }
             if (line.startsWith("bestmove")) {
@@ -71,7 +71,7 @@ public class StockFish {
             }
         }
 
-        return new String[]{bestMove, evaluation};
+        return new String[]{bestMove,evaluation,evaluationMate};
     }
 
     public void close() throws IOException {

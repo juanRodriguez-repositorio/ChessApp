@@ -13,12 +13,14 @@ public class ChessExercises {
     private String level;
     private String title;
     private int movesForward;
+    private String aim;
     
-    public ChessExercises(String fen, String level, String title,int movesForward){
+    public ChessExercises(String fen, String level, String title,int movesForward,String aim){
         this.fen=fen;
         this.level=level;
         this.title=title;
         this.movesForward=movesForward;
+        this.aim=aim;
     
     }
     //getters
@@ -33,5 +35,8 @@ public class ChessExercises {
     }
     public int getMovesForward(){
         return this.movesForward;
+    }
+    public String getAim(){
+        return this.aim;
     }
 }
