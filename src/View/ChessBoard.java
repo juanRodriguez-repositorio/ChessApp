@@ -41,6 +41,7 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
     
     
     public ChessBoard(String fen,ExercisesView container) {
+        setBackground(new Color(213, 249, 222));
         containerView=container;
         board = new Board();
         board.loadFromFen(fen);
@@ -76,7 +77,7 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
         for (int rank = 0; rank < 8; rank++) {
             for (int file = 0; file < 8; file++) {
                 boolean isWhite = (rank + file) % 2 == 0;
-                g.setColor(isWhite ? Color.WHITE : Color.GRAY);
+                g.setColor(isWhite ? Color.WHITE : new Color(95, 170, 73));
                 g.fillRect(file * tileSize, rank * tileSize, tileSize, tileSize);
 
                 Square square = Square.values()[8 * (7 - rank) + file]; // Perspectiva estándar
@@ -143,7 +144,15 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
     }
     @Override
     public Dimension getPreferredSize() {
-        return new Dimension(400, 400); // Tamaño recomendado
+        return new Dimension(475, 475); // Tamaño recomendado
+    }
+    @Override
+    public Dimension getMaximumSize() {
+        return new Dimension(490, 490); // Tamaño recomendado
+    }
+    @Override
+    public Dimension getMinimumSize() {
+        return new Dimension(470, 470); // Tamaño recomendado
     }
     @Override public void mouseClicked(MouseEvent e) {}
     @Override public void mouseEntered(MouseEvent e) {}
@@ -192,7 +201,7 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
         if(isEngine==false){
             fenBefore=board.getFen().trim();
         }
-        if (board.isMoveLegal(move, true) && verifyMove(fromSquare,toSquare) && isProcessing==false && isGettingBackInPosition==false && ChessExercisesController.canDoMove()) {
+        if (board.isMoveLegal(move, true) && verifyMove(fromSquare,toSquare) && isProcessing==false && isGettingBackInPosition==false && ChessExercisesController.canDoMove() && isExerciseFinish==false) {
                 
                 try {
                     board.doMove(move);
@@ -211,7 +220,7 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
                 } catch (MoveException ex) {
                     System.err.println("Movimiento inválido: " + ex.getMessage());
                 }
-            }
+           }
     
         
     
@@ -286,6 +295,9 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
     }
     public void setIsExerciseFinish(boolean isIt){
         isExerciseFinish=isIt;
+    }
+    public boolean getIsProcessing(){
+        return isProcessing;
     }
 
 

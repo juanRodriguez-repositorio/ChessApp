@@ -16,6 +16,7 @@ import Model.ChessExercises;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
+import javax.swing.border.EmptyBorder;
 
 public class ExercisesView extends JFrame {
     private JLabel messageLabel;
@@ -36,7 +37,8 @@ public class ExercisesView extends JFrame {
     
 
     public ExercisesView() {
-        messageLabel = new JLabel("Selecciona una partida para comenzar.");
+        getContentPane().setBackground(new Color(213, 249, 222));
+        messageLabel = new JLabel("<html><span style='font-size:14pt;'>Selecciona una partida para comenzar.</span></html>");
         setTitle("Chess Exercises");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(900, 700);
@@ -53,10 +55,20 @@ public class ExercisesView extends JFrame {
         backButton=new JButton("Atras");
         machineMoveButton=new JButton("Jugada de la maquina");
         resetButton=new JButton("Reiniciar");
-        nextButton=new JButton("Siguente");
+        nextButton=new JButton("Siguiente");
         
-        resetButton.setEnabled(false);
-        nextButton.setEnabled(false);
+        styleButtonGreen(backButton);
+        styleButtonGreen(machineMoveButton);
+        styleButtonWhite(resetButton);
+        styleButtonWhite(nextButton);
+        styleButtonLightGreen(tacticsButton);
+        styleButtonLightGreen(finalsButton);
+        styleButtonLightGreen(matesButton);
+        
+        setResetButtonDisabled();
+        setNextButtonDisabled();
+        
+        
         //eventos a los botones
         
         tacticsButton.addActionListener(e -> loadExercises(0));
@@ -66,7 +78,7 @@ public class ExercisesView extends JFrame {
         machineMoveButton.addActionListener(e -> doEngineMove());
         resetButton.addActionListener(e -> resetExercise());
         nextButton.addActionListener(e -> nextExercise());
-        machineMoveButton.setEnabled(false);
+        setDisabledMoveMachine();
         
         // Modelo de lista y lista con scroll
         listModel = new DefaultListModel<>();
@@ -83,14 +95,19 @@ public class ExercisesView extends JFrame {
         // Evento de clic en la lista
         gamesList.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
+                if(chessBoard.getIsProcessing()){
+                    return;
+                }
                 if (e.getClickCount() == 2) { // Doble clic
                     index = gamesList.getSelectedIndex();
                     exerciseSelected=exercises[index];
                     chessBoard.updateBoard(exerciseSelected.getFen(),true);
                     ChessExercisesController.setStepsInExercise(exerciseSelected.getMovesForward(),chessBoard.getSideOfUser());
                     setDisabledMoveMachine();
-                    resetButton.setEnabled(true);
-                    nextButton.setEnabled(false);
+                    setResetButtonEnabled();
+                    setNextButtonDisabled();
+                    setBackButtonEnabled();
+                    chessBoard.setIsExerciseFinish(false);
                     if (index != -1) {
                         showMessage("Vamos! "+exerciseSelected.getAim());
                     }
@@ -102,6 +119,7 @@ public class ExercisesView extends JFrame {
         JPanel leftPanel = new JPanel();
         leftPanel.setLayout(new BorderLayout());
         JScrollPane scrollPane = new JScrollPane(gamesList);
+        scrollPane.setBackground(new Color(213, 249, 222));
         scrollPane.setBorder(BorderFactory.createTitledBorder("Lista de Partidas"));
         leftPanel.add(scrollPane, BorderLayout.CENTER);
 
@@ -111,8 +129,18 @@ public class ExercisesView extends JFrame {
         buttonPanel.add(tacticsButton);
         buttonPanel.add(finalsButton);
         buttonPanel.add(matesButton);
+        buttonPanel.setBackground(new Color(213, 249, 222));
         leftPanel.add(buttonPanel, BorderLayout.SOUTH);
-        add(leftPanel, BorderLayout.WEST);
+        leftPanel.setPreferredSize(new Dimension(300,350));
+        
+        
+        JPanel container = new JPanel();
+        container.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        container.add(leftPanel);
+        container.setBackground(new Color(213, 249, 222));
+        container.setBorder(new EmptyBorder(0, 20, 0, 0)); // Solo margen izquierdo
+        add(container, BorderLayout.WEST);
+        
         
         //panel del chessBoard y los botones de atras y jugada de la maquina
         
@@ -121,24 +149,33 @@ public class ExercisesView extends JFrame {
         controlPanel.add(machineMoveButton);
         controlPanel.add(resetButton);
         controlPanel.add(nextButton);
+        controlPanel.setBackground(new Color(213, 249, 222));
         
         JPanel chessPanel = new JPanel(new BorderLayout());
-        chessPanel.add(chessBoard, BorderLayout.CENTER);
+        JPanel boardContainer = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        boardContainer.add(chessBoard);
+        boardContainer.setBackground(new Color(213, 249, 222));
+        chessPanel.add(boardContainer, BorderLayout.CENTER);
         chessPanel.add(controlPanel, BorderLayout.SOUTH);
+        chessPanel.setBorder(new EmptyBorder(0,0,0,20));
+        chessPanel.setBackground(new Color(213, 249, 222));
+        chessPanel.setBorder(new EmptyBorder(0,0,40,0));
         add(chessPanel, BorderLayout.EAST);
         // Panel de salida de mensajes
         JPanel outputPanel = new JPanel();
         outputPanel.setBorder(BorderFactory.createTitledBorder("Mensajes"));
         outputPanel.setPreferredSize(new Dimension(0, 50));
         outputPanel.add(messageLabel);
-        add(outputPanel, BorderLayout.SOUTH);
+        outputPanel.setBackground(new Color(213, 249, 222));
+        add(outputPanel, BorderLayout.NORTH);
 
         setLocationRelativeTo(null); // Centra la ventana
         setVisible(true);
     }
 
     public void showMessage(String outPut) {
-        messageLabel.setText(outPut);
+        
+        SwingUtilities.invokeLater(()-> messageLabel.setText("<html>" +"<span style='font-size:14pt'>"+outPut+"</span></html>"));
     }
 
     public void showLoading() {
@@ -158,7 +195,7 @@ public class ExercisesView extends JFrame {
             try {
                 dots = (dots + 1) % 4; // Alterna entre 0, 1, 2, 3 puntos
                 String text = baseText + ".".repeat(dots);
-                messageLabel.setText(text);
+                showMessage("<span style='color:rgb(120,120,120);'>"+text+"</span>");
                 Thread.sleep(500);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -182,6 +219,9 @@ public class ExercisesView extends JFrame {
         }
     }
     private void loadExercises(int type) {
+        if(chessBoard.getIsProcessing()){
+            return;
+        }
         isLoading=true;
         ArrayList<String> titleOfExercises=new ArrayList<>();
         new Thread(this::startLoadingExercises).start();
@@ -226,9 +266,11 @@ public class ExercisesView extends JFrame {
     }
     public void setEnabledMoveMachine(){
         machineMoveButton.setEnabled(true);
+        styleEnabledGreenButton(machineMoveButton);
     }
     public void setDisabledMoveMachine(){
         machineMoveButton.setEnabled(false);
+        styleDisabledGreenButton(machineMoveButton);
     }
     public void doEngineMoveInboard(String move){
         chessBoard.doEngineMoveInBoard(move,this);
@@ -236,8 +278,9 @@ public class ExercisesView extends JFrame {
     private void resetExercise(){
         chessBoard.updateBoard(exerciseSelected.getFen(),true);
         ChessExercisesController.setStepsInExercise(exerciseSelected.getMovesForward(),chessBoard.getSideOfUser());
-        nextButton.setEnabled(false);
-        backButton.setEnabled(true);
+        setNextButtonDisabled();
+        setBackButtonEnabled();
+        setDisabledMoveMachine();
         showMessage("Vamos! "+exerciseSelected.getAim());
         chessBoard.setIsExerciseFinish(false);
         
@@ -248,28 +291,207 @@ public class ExercisesView extends JFrame {
             gamesList.setSelectedIndex(index);
             gamesList.ensureIndexIsVisible(index);
             exerciseSelected=exercises[index];
+            chessBoard.updateBoard(exerciseSelected.getFen(),true);
+            ChessExercisesController.setStepsInExercise(exerciseSelected.getMovesForward(),chessBoard.getSideOfUser());
+            setNextButtonDisabled();
+            setResetButtonEnabled();
+            setBackButtonEnabled();
+            setDisabledMoveMachine();
+            chessBoard.setIsExerciseFinish(false);
             showMessage("Vamos! "+exerciseSelected.getAim());
         } else {
             JOptionPane.showMessageDialog(null, "Fin de la lista");
         }
     }
+    private void styleButtonLightGreen(JButton button){
+        button.setBackground(new Color(219, 244, 167));
+        button.setForeground(Color.BLACK);
+        button.setFont(new Font("Arial", Font.BOLD, 12)); // Fuente
+        button.setFocusPainted(false); // Eliminar el borde de enfoque
+        button.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20)); // Agregar padding
+        button.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                if(button.isEnabled()==false){
+                    return;
+                }
+                button.setBackground(new Color(200, 233, 143)); // Color de fondo más claro al pasar el ratón
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                if(button.isEnabled()==false){
+                    return;
+                }
+                button.setBackground(new Color(219, 244, 167)); // Restaurar el color original
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                if(button.isEnabled()==false){
+                    return;
+                }
+                UIManager.put("Button.select",new Color(176, 217, 119));
+                button.revalidate(); // Cambiar el color cuando se hace clic
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                if(button.isEnabled()==false){
+                    return;
+                }
+                if (button.getBackground() != new Color(219, 244, 167)) {
+                     //button.setBackground(hoverColor);
+                     UIManager.put("Button.select",new Color(200, 233, 143));
+                     } else {
+                       //button.setBackground(backgroundColor);
+                       UIManager.put("Button.select",new Color(219, 244, 167));
+                     }
+            
+                } // Restaurar el color original al soltar el clic
+            
+            });
+        
+    }
+    private void styleButtonGreen(JButton button) {
+        button.setBackground(new Color(0, 148, 76)); 
+        button.setForeground(new Color(255,255,255)); // Color de texto (blanco)
+        button.setFont(new Font("Arial", Font.BOLD, 14)); // Fuente
+        button.setFocusPainted(false); // Eliminar el borde de enfoque
+        button.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20)); // Agregar padding
+        button.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                if(button.isEnabled()==false){
+                    return;
+                }
+                button.setBackground(new Color(0, 127, 65)); // Color de fondo más claro al pasar el ratón
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                if(button.isEnabled()==false){
+                    return;
+                }
+                button.setBackground(new Color(0, 148, 76)); // Restaurar el color original
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                if(button.isEnabled()==false){
+                    return;
+                }
+                UIManager.put("Button.select",new Color(0, 102, 55));
+                button.revalidate(); // Cambiar el color cuando se hace clic
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                if(button.isEnabled()==false){
+                    return;
+                }
+                if (button.getBackground() != new Color(0, 148, 76)) {
+                     //button.setBackground(hoverColor);
+                     UIManager.put("Button.select",new Color(0, 127, 65));
+                     } else {
+                       //button.setBackground(backgroundColor);
+                       UIManager.put("Button.select",new Color(0, 148, 76));
+                     }
+            
+                } // Restaurar el color original al soltar el clic
+            
+            });
+    }
+    private void styleButtonWhite(JButton button) {
+        button.setBackground(new Color(255,255,255)); 
+        button.setForeground(Color.BLACK); 
+        button.setFont(new Font("Arial", Font.BOLD, 14)); // Fuente
+        button.setFocusPainted(false); // Eliminar el borde de enfoque
+        button.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20)); // Agregar padding
+        button.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                if(button.isEnabled()==false){
+                    return;
+                }
+                button.setBackground(new Color(230,230,230)); // Color de fondo más claro al pasar el ratón
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                if(button.isEnabled()==false){
+                    return;
+                }
+                button.setBackground(new Color(255,255,255)); // Restaurar el color original
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                if(button.isEnabled()==false){
+                    return;
+                }
+                UIManager.put("Button.select",new Color(220,220,220));
+                button.revalidate(); // Cambiar el color cuando se hace clic
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                if(button.isEnabled()==false){
+                    return;
+                }
+                if (button.getBackground() != new Color(255,255,255)) {
+                     //button.setBackground(hoverColor);
+                     UIManager.put("Button.select",new Color(230,230,230));
+                     } else {
+                       //button.setBackground(backgroundColor);
+                       UIManager.put("Button.select",new Color(255,255,255));
+                     }
+            
+                } // Restaurar el color original al soltar el clic
+            
+            });
+    }
     public void setResetButtonEnabled(){
         resetButton.setEnabled(true);
+        styleEnabledWhiteButton(resetButton);
     }
     public void setResetButtonDisabled(){
         resetButton.setEnabled(false);
+        styleDisabledWhiteButton(resetButton);
     }
     public void setNextButtonEnabled(){
         nextButton.setEnabled(true);
+        styleEnabledWhiteButton(nextButton);
     }
     public void setNextButtonDisabled(){
         nextButton.setEnabled(false);
+        styleDisabledWhiteButton(nextButton);
     }
     public void setBackButtonDisabled(){
         backButton.setEnabled(false);
+        styleDisabledGreenButton(backButton);
     }
     public void setBackButtonEnabled(){
         backButton.setEnabled(true);
+        styleEnabledGreenButton(backButton);
+    }
+    public void styleDisabledGreenButton(JButton button){
+        button.setBackground(new Color(0,121,64));
+        button.setForeground(new Color(220,220,220));
+        
+    }
+    public void styleEnabledGreenButton(JButton button){
+        button.setBackground(new Color(0, 148, 76));
+        button.setForeground(new Color(255,255,255));
+    }
+    public void styleDisabledWhiteButton(JButton button){
+        
+        button.setBackground(new Color(210,210,210));
+        button.setForeground(new Color(20,20,20));
+    }
+    public void styleEnabledWhiteButton(JButton button){
+        button.setBackground(new Color(255,255,255));
+        button.setForeground(Color.BLACK);
     }
     
 }

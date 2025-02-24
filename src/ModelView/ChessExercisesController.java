@@ -39,6 +39,9 @@ public class ChessExercisesController {
     public static void EvaluatePosition(String fenBefore, String fenAfter,String whoMove,ExercisesView window,boolean isEngine,ChessBoard board)throws ParseException{
        
         try {
+            if(sideOfMachine.equalsIgnoreCase(whoMove)){
+                window.setDisabledMoveMachine();
+            }
             String[] evaluationBefore=stockFish.getEvaluation(fenBefore);
             String[] evaluationAfter=stockFish.getEvaluation(fenAfter);
             NumberFormat format = NumberFormat.getInstance(Locale.FRANCE);
@@ -63,7 +66,7 @@ public class ChessExercisesController {
                         }
                         window.showMessage("Gran movimiento, tienes "+evaluationAfter[2]);
                     }else{
-                        window.showMessage("Movimiento de tu oponente: "+evaluationAfter[1]+evaluationAfter[2]);
+                        window.showMessage("Movimiento de tu oponente: "+"<span style='color:blue; font-size:16pt;'>" +evaluationAfter[1]+"</span>"+evaluationAfter[2]);
                     }
                     return;
                 }
@@ -73,7 +76,7 @@ public class ChessExercisesController {
                     if(evaluationNumberAfter>8){
                     window.showMessage("Buen movimiento, aunque desaprovechaste una oportunidad de mate");
                     }else{
-                        window.showMessage("opps... error"+"La mejor jugada en la posicion era: "+evaluationBefore[0]+" Evaluacion de la posicion: "+evaluationNumberAfter);
+                        window.showMessage(buildMessage("opps... Error! "," inténtalo de nuevo!",evaluationNumberAfter,evaluationBefore[0]));
                         window.getBack(fenBefore);
                         return;
                     }
@@ -81,7 +84,7 @@ public class ChessExercisesController {
                     if(evaluationNumberAfter<-8){
                         window.showMessage("Buen movimiento, aunque desaprovechaste una oportunidad de"+evaluationAfter[2]);
                     }else{
-                        window.showMessage("opps... error"+"La mejor jugada en la posicion era: "+evaluationBefore[0]+" Evaluacion de la posicion: "+evaluationNumberAfter);
+                        window.showMessage(buildMessage("opps... Error! "," inténtalo de nuevo!",evaluationNumberAfter,evaluationBefore[0]));
                         window.getBack(fenBefore);
                         return;
                     }
@@ -101,16 +104,20 @@ public class ChessExercisesController {
             window.endLoading();
             System.out.println("antes: "+evaluationNumberBefore);
             System.out.println("despues: "+evaluationNumberAfter);
-            if(whoMove.equalsIgnoreCase(sideOfMachine)){
+            if(isEngine){
                 bestMoveInActualPosition=evaluationAfter[0];
                 window.doEngineMoveInboard(bestMoveInActualPosition);
+                showMessageOpposideSide(evaluationNumberBefore,evaluationNumberAfter,window,fenBefore,evaluationAfter[0],isEngine);
+                return;
+            }
+            if(whoMove.equalsIgnoreCase(sideOfMachine)){
                 showMessageOpposideSide(evaluationNumberBefore,evaluationNumberAfter,window,fenBefore,evaluationAfter[0],isEngine);
                 return;
             }
             if(Math.abs(evaluationNumberBefore-evaluationNumberAfter)>0.7){
                 System.out.println("opps... error");
                 System.out.println("mejor jugada: "+evaluationAfter[0]);
-                window.showMessage("opps... error"+"La mejor jugada en la posicion era: "+evaluationBefore[0]+" Evaluacion de la posicion: "+evaluationNumberAfter);
+                window.showMessage(buildMessage("opps... Error! "," inténtalo de nuevo!",evaluationNumberAfter,evaluationBefore[0]));
                 window.getBack(fenBefore);
             }else{
                 System.out.println("gran jugada");
@@ -123,7 +130,7 @@ public class ChessExercisesController {
                     board.setIsExerciseFinish(true); 
                     return;
                 }
-                window.showMessage("gran jugada!, "+"mejor jugada en la posicion: "+evaluationBefore[0]+ " Evaluacion de la posicion: "+evaluationNumberAfter+"Siguiente paso!");
+                window.showMessage(buildMessage("Gran jugada! "," Siguente paso!",evaluationNumberAfter,evaluationBefore[0]));
                 window.setEnabledMoveMachine();
                 
             }
@@ -207,7 +214,7 @@ public class ChessExercisesController {
               window.setBackButtonDisabled();
               return;
             }
-            window.showMessage("Jugada elegida para tu oponente: "+opponentMove+", Evaluacion de la posicion: "+evaluationNumberAfter);
+            window.showMessage("Jugada elegida para tu oponente: "+"<span style='color:blue; font-size:16pt;'>" +opponentMove+"</span> "+", Evaluacion de la posicion: "+"<span style='color:green; font-size:16pt;'>"+evaluationNumberAfter+"</span> ");
         }
         
     }
@@ -225,6 +232,12 @@ public class ChessExercisesController {
             window.setEnabledMoveMachine();
         }
         
+    }
+    private static String buildMessage(String initialString,String finalString,double evaluationNumber,String evaluationMove){
+        return initialString +
+                 "<b>Mejor jugada en la posición: </b>"+"<span style='color:blue; font-size:16pt;'>" + evaluationMove  +"</span> "+
+                 "<b>Evaluación de la posición: </b>" +"<span style='color:green; font-size:16pt;'>"+ evaluationNumber  +"</span> "+
+                finalString;
     }
     
     
