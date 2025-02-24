@@ -21,6 +21,7 @@ import com.github.bhlangonijr.chesslib.move.MoveException;
 import ModelView.ChessExercisesController;
 import java.text.ParseException;
 import java.util.ArrayList;
+import Model.OutPuts;
 
 
 public class ChessBoard extends JPanel implements MouseListener, MouseMotionListener {
@@ -191,7 +192,7 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
                 deleteLastInHistoral();// Segunda acción
                 System.out.println("Movimiento revertido"); // Tercera acción
                 ChessExercisesController.resetMachineButton(board.getSideToMove().toString(),window);
-                containerView.showMessage("¿hacia atras en serio?, esta bien, hazlo de nuevo!");
+                containerView.showMessage(OutPuts.getBackMoveMessage());
 });
             
         }
@@ -200,6 +201,9 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
     private void doMove(Move move,String fromSquare,String toSquare,String whoMove,boolean isEngine){
         if(isEngine==false){
             fenBefore=board.getFen().trim();
+        }
+        if(containerView.getGameMode()==-1 || isProcessing || containerView.getIsLoadingList()){
+            return;
         }
         if (board.isMoveLegal(move, true) && verifyMove(fromSquare,toSquare) && isProcessing==false && isGettingBackInPosition==false && ChessExercisesController.canDoMove() && isExerciseFinish==false) {
                 

@@ -29,16 +29,19 @@ public class ExercisesView extends JFrame {
     private ChessExercises[] exercises;
     private ChessBoard chessBoard;
     private boolean isGettingBack;
-    private JButton backButton, machineMoveButton,resetButton,nextButton; 
+    private JButton backButton, machineMoveButton,resetButton,nextButton,freeGameButton; 
     private ChessExercises exerciseSelected;
     private int index;
+    private int gameMode=-1;
     
     
     
 
     public ExercisesView() {
         getContentPane().setBackground(new Color(213, 249, 222));
-        messageLabel = new JLabel("<html><span style='font-size:14pt;'>Selecciona una partida para comenzar.</span></html>");
+        messageLabel = new JLabel("<html><div style='text-align:center; font-size:14pt;'>Selecciona una partida para comenzar.</div></html>");
+        messageLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        messageLabel.setVerticalAlignment(SwingConstants.CENTER);
         setTitle("Chess Exercises");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(900, 700);
@@ -52,6 +55,7 @@ public class ExercisesView extends JFrame {
         tacticsButton=new JButton("Tacticas");
         finalsButton=new JButton("Finales");
         matesButton=new JButton("Mates");
+        freeGameButton=new JButton("Juego libre!");
         backButton=new JButton("Atras");
         machineMoveButton=new JButton("Jugada de la maquina");
         resetButton=new JButton("Reiniciar");
@@ -64,6 +68,7 @@ public class ExercisesView extends JFrame {
         styleButtonLightGreen(tacticsButton);
         styleButtonLightGreen(finalsButton);
         styleButtonLightGreen(matesButton);
+        styleButtonLightGreen(freeGameButton);
         
         setResetButtonDisabled();
         setNextButtonDisabled();
@@ -74,6 +79,7 @@ public class ExercisesView extends JFrame {
         tacticsButton.addActionListener(e -> loadExercises(0));
         finalsButton.addActionListener(e -> loadExercises(1));
         matesButton.addActionListener(e -> loadExercises(2));
+        freeGameButton.addActionListener(e -> setFreeMode());
         backButton.addActionListener(e -> goBackInHistoral());
         machineMoveButton.addActionListener(e -> doEngineMove());
         resetButton.addActionListener(e -> resetExercise());
@@ -85,17 +91,14 @@ public class ExercisesView extends JFrame {
         gamesList = new JList<>(listModel);
         gamesList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-        // Agregar juegos de ejemplo
-        listModel.addElement("Partida 1 - Defensa Siciliana");
-        listModel.addElement("Partida 2 - Gambito de Dama");
-        listModel.addElement("Partida 3 - Defensa Francesa");
-        listModel.addElement("Partida 4 - Apertura Española");
-        listModel.addElement("Partida 5 - Defensa Caro-Kann");
+        
+        listModel.addElement("Elige un modo para empezar");
+        
 
         // Evento de clic en la lista
         gamesList.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
-                if(chessBoard.getIsProcessing()){
+                if(chessBoard.getIsProcessing() || isLoading || getGameMode()==-1){
                     return;
                 }
                 if (e.getClickCount() == 2) { // Doble clic
@@ -125,10 +128,19 @@ public class ExercisesView extends JFrame {
 
         // Panel de botones debajo de la lista
         JPanel buttonPanel = new JPanel();
-        buttonPanel.setLayout(new GridLayout(1, 3, 5, 5));
-        buttonPanel.add(tacticsButton);
-        buttonPanel.add(finalsButton);
-        buttonPanel.add(matesButton);
+        buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.Y_AXIS)); // Apilados verticalmente
+        buttonPanel.setAlignmentX(Component.CENTER_ALIGNMENT); 
+        JPanel topButtonsPanel = new JPanel();
+        topButtonsPanel.setBackground(new Color(213, 249, 222));
+        topButtonsPanel.setLayout(new GridLayout(1, 3, 5, 5));
+        topButtonsPanel.add(tacticsButton);
+        topButtonsPanel.add(finalsButton);
+        topButtonsPanel.add(matesButton);
+        topButtonsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        freeGameButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        buttonPanel.add(topButtonsPanel);
+        buttonPanel.add(Box.createVerticalStrut(10)); // Espaciado opcional
+        buttonPanel.add(freeGameButton);
         buttonPanel.setBackground(new Color(213, 249, 222));
         leftPanel.add(buttonPanel, BorderLayout.SOUTH);
         leftPanel.setPreferredSize(new Dimension(300,350));
@@ -162,9 +174,9 @@ public class ExercisesView extends JFrame {
         chessPanel.setBorder(new EmptyBorder(0,0,40,0));
         add(chessPanel, BorderLayout.EAST);
         // Panel de salida de mensajes
-        JPanel outputPanel = new JPanel();
+        JPanel outputPanel = new JPanel(new GridBagLayout());
         outputPanel.setBorder(BorderFactory.createTitledBorder("Mensajes"));
-        outputPanel.setPreferredSize(new Dimension(0, 50));
+        outputPanel.setPreferredSize(new Dimension(0, 70));
         outputPanel.add(messageLabel);
         outputPanel.setBackground(new Color(213, 249, 222));
         add(outputPanel, BorderLayout.NORTH);
@@ -219,10 +231,11 @@ public class ExercisesView extends JFrame {
         }
     }
     private void loadExercises(int type) {
-        if(chessBoard.getIsProcessing()){
+        if(chessBoard.getIsProcessing() || isLoading){
             return;
         }
         isLoading=true;
+        setGameMode(type);
         ArrayList<String> titleOfExercises=new ArrayList<>();
         new Thread(this::startLoadingExercises).start();
         new Thread(() -> {
@@ -261,6 +274,9 @@ public class ExercisesView extends JFrame {
         chessBoard.goBack(this);
     }
     private void doEngineMove(){
+        if(gameMode==-1){
+            return;
+        }
         machineMoveButton.setEnabled(false);
         ChessExercisesController.doEngineMove(chessBoard);
     }
@@ -276,6 +292,9 @@ public class ExercisesView extends JFrame {
         chessBoard.doEngineMoveInBoard(move,this);
     }
     private void resetExercise(){
+        if(isLoading || chessBoard.getIsProcessing()){
+            return;
+        }
         chessBoard.updateBoard(exerciseSelected.getFen(),true);
         ChessExercisesController.setStepsInExercise(exerciseSelected.getMovesForward(),chessBoard.getSideOfUser());
         setNextButtonDisabled();
@@ -286,6 +305,9 @@ public class ExercisesView extends JFrame {
         
     }
     private void nextExercise(){
+        if(isLoading || chessBoard.getIsProcessing()){
+            return;
+        }
         if (index < listModel.getSize() - 1) {
             index++;
             gamesList.setSelectedIndex(index);
@@ -492,6 +514,24 @@ public class ExercisesView extends JFrame {
     public void styleEnabledWhiteButton(JButton button){
         button.setBackground(new Color(255,255,255));
         button.setForeground(Color.BLACK);
+    }
+    public int getGameMode(){
+        return gameMode;
+    }
+    private void setGameMode(int mode){
+        gameMode=mode;
+    }
+    public boolean getIsLoadingList(){
+        return isLoading;
+    }
+    private void setFreeMode(){
+        gameMode=3;
+        listModel.clear();
+        listModel.addElement("Análisis libre!");
+        setNextButtonDisabled();
+        setEnabledMoveMachine();
+        setResetButtonDisabled();
+        setBackButtonEnabled();
     }
     
 }

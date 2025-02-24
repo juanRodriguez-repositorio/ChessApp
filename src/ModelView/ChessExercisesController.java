@@ -12,6 +12,7 @@ import View.ExercisesView;
 import Model.ChessExercises;
 import Model.ChessExercisesProvider;
 import View.ChessBoard;
+import Model.OutPuts;
 
 /**
  *
@@ -50,7 +51,7 @@ public class ChessExercisesController {
                 if(evaluationAfter[2].equals("")!=true){
                     goAheadInSteps();
                     if(totalStepsInExercise==actualStepInExercise){
-                        window.showMessage("Genial!, terminaste el ejercicio, ve al siguiente en la lista!");
+                        window.showMessage(OutPuts.getCompletedExerciseMessage());
                         window.setNextButtonEnabled();
                         window.setBackButtonDisabled();
                         board.setIsExerciseFinish(true); 
@@ -84,7 +85,7 @@ public class ChessExercisesController {
                     if(evaluationNumberAfter<-8){
                         window.showMessage("Buen movimiento, aunque desaprovechaste una oportunidad de"+evaluationAfter[2]);
                     }else{
-                        window.showMessage(buildMessage("opps... Error! "," inténtalo de nuevo!",evaluationNumberAfter,evaluationBefore[0]));
+                        window.showMessage(buildMessage("opps... Error! "," inténtalo de nuevo!<br>"+OutPuts.getBadMoveMessage(),evaluationNumberAfter,evaluationBefore[0]));
                         window.getBack(fenBefore);
                         return;
                     }
@@ -117,20 +118,20 @@ public class ChessExercisesController {
             if(Math.abs(evaluationNumberBefore-evaluationNumberAfter)>0.7){
                 System.out.println("opps... error");
                 System.out.println("mejor jugada: "+evaluationAfter[0]);
-                window.showMessage(buildMessage("opps... Error! "," inténtalo de nuevo!",evaluationNumberAfter,evaluationBefore[0]));
+                window.showMessage(buildMessage("opps... Error! "," inténtalo de nuevo!<br>"+OutPuts.getBadMoveMessage(),evaluationNumberAfter,evaluationBefore[0]));
                 window.getBack(fenBefore);
             }else{
                 System.out.println("gran jugada");
                 System.out.println("mejor jugada: "+evaluationAfter[0]);
                 goAheadInSteps();
                 if(totalStepsInExercise==actualStepInExercise){
-                    window.showMessage("Genial!, terminaste el ejercicio, ve al siguiente en la lista!");
+                    window.showMessage(OutPuts.getCompletedExerciseMessage());
                     window.setNextButtonEnabled();
                     window.setBackButtonDisabled();
                     board.setIsExerciseFinish(true); 
                     return;
                 }
-                window.showMessage(buildMessage("Gran jugada! "," Siguente paso!",evaluationNumberAfter,evaluationBefore[0]));
+                window.showMessage(buildMessage("Gran jugada! "," Siguente paso!<br>"+OutPuts.getGoodMoveMessage(),evaluationNumberAfter,evaluationBefore[0]));
                 window.setEnabledMoveMachine();
                 
             }
@@ -197,19 +198,19 @@ public class ChessExercisesController {
         System.out.println("esta tambien "+evaluationNumberAfter);
         double evaluationNumber=Math.abs(evaluationNumberBefore-evaluationNumberAfter);
         if(Math.abs(evaluationNumberBefore-evaluationNumberAfter)>1){
-           window.showMessage("La jugada que elegiste para tu oponente es demasiado mala, intenta con otra, o pidele a la maquina una jugada");
+           window.showMessage("La jugada que elegiste para tu oponente es demasiado mala,<br> intenta con otra, o pidele a la maquina una jugada");
            window.getBack(fenBefore);
            errorTolerance=errorTolerance-lastEvaluationNumber;
             
         }else if(errorTolerance>5){
-            window.showMessage("Acumulaste una serie de jugadas malas para tu oponente,debes elegir una mejor jugada o pedirle a la maquina una jugada");
+            window.showMessage("Acumulaste una serie de jugadas malas para tu oponente,<br> debes elegir una mejor jugada o pedirle a la maquina una jugada");
             window.getBack(fenBefore);
             errorTolerance=errorTolerance-lastEvaluationNumber;
         }else{
             errorTolerance=errorTolerance+evaluationNumber;
             goAheadInSteps();
             if(totalStepsInExercise==actualStepInExercise){
-              window.showMessage("Genial!, terminaste el ejercicio, ve al siguiente en la lista!");
+              window.showMessage(OutPuts.getCompletedExerciseMessage());
               window.setNextButtonEnabled();
               window.setBackButtonDisabled();
               return;
