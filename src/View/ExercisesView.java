@@ -103,17 +103,18 @@ public class ExercisesView extends JFrame {
                 }
                 if (e.getClickCount() == 2) { // Doble clic
                     index = gamesList.getSelectedIndex();
-                    exerciseSelected=exercises[index];
-                    chessBoard.updateBoard(exerciseSelected.getFen(),true);
-                    ChessExercisesController.setStepsInExercise(exerciseSelected.getMovesForward(),chessBoard.getSideOfUser());
-                    setDisabledMoveMachine();
-                    setResetButtonEnabled();
-                    setNextButtonDisabled();
-                    setBackButtonEnabled();
-                    chessBoard.setIsExerciseFinish(false);
-                    if (index != -1) {
-                        showMessage("Vamos! "+exerciseSelected.getAim());
+                    if(index >= 0 && index < exercises.length){
+                        exerciseSelected=exercises[index];
+                        chessBoard.updateBoard(exerciseSelected.getFen(),true);
+                        ChessExercisesController.setStepsInExercise(exerciseSelected.getMovesForward(),chessBoard.getSideOfUser());
+                        setDisabledMoveMachine();
+                        setResetButtonEnabled();
+                        setNextButtonDisabled();
+                        setBackButtonEnabled();
+                        chessBoard.setIsExerciseFinish(false);
+                        showMessage("Vamos! "+exerciseSelected.getAim()+" Dificultad: "+showDificulty(exerciseSelected.getLevel()));
                     }
+                    
                 }
             }
         });
@@ -245,6 +246,7 @@ public class ExercisesView extends JFrame {
                 for (ChessExercises exercise : exercises) {
                     titleOfExercises.add(exercise.getTitle());
                 }
+                showMessage("Selecciona una partida para comenzar");
                 endLoading();
                 listModel.clear();
                 for (String title : titleOfExercises) {
@@ -320,7 +322,7 @@ public class ExercisesView extends JFrame {
             setBackButtonEnabled();
             setDisabledMoveMachine();
             chessBoard.setIsExerciseFinish(false);
-            showMessage("Vamos! "+exerciseSelected.getAim());
+            showMessage("Vamos! "+exerciseSelected.getAim()+" Dificultad: "+showDificulty(exerciseSelected.getLevel()));
         } else {
             JOptionPane.showMessageDialog(null, "Fin de la lista");
         }
@@ -525,6 +527,9 @@ public class ExercisesView extends JFrame {
         return isLoading;
     }
     private void setFreeMode(){
+        if(isLoading || chessBoard.getIsProcessing()){
+            return;
+        }
         gameMode=3;
         listModel.clear();
         listModel.addElement("Análisis libre!");
@@ -532,6 +537,15 @@ public class ExercisesView extends JFrame {
         setEnabledMoveMachine();
         setResetButtonDisabled();
         setBackButtonEnabled();
+    }
+    private String showDificulty(String dificulty){
+        if(dificulty.equalsIgnoreCase("fácil")){
+            return "<span style='color: #4CAF50;'>Fácil</span>";
+        }else if(dificulty.equalsIgnoreCase("difícil")){
+            return "<span style='color: #FFC107;'>Intermedio</span>";
+        }else{
+            return "<span style='color: #F44336;'>Difícil</span>";
+        }
     }
     
 }

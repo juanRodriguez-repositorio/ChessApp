@@ -231,13 +231,19 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
     }
     private void startingProcessOfDoMove(String fenBefore, String fenAfter,String whoMove,boolean isEngine){
         isProcessing=true;
-        containerView.setBackButtonDisabled();
-        containerView.setResetButtonDisabled();
+        if(containerView.getGameMode()!=3){
+            containerView.setBackButtonDisabled();
+            containerView.setResetButtonDisabled();
+        }
         new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() throws Exception {
                 containerView.showLoading();
                 System.out.println("en StaritingProcessOfDoMove es: "+isEngine);
+                if(containerView.getGameMode()==3){
+                    ChessExercisesController.EvaluateFreePosition(fenBefore,fenAfter,whoMove,containerView,isEngine);
+                    return null;
+                }
                 ChessExercisesController.EvaluatePosition(fenBefore, fenAfter,whoMove,containerView,isEngine,ChessBoard.this);
                 return null;
             }
@@ -250,11 +256,17 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
                    System.out.println("se Ejecuta");
                    repaint();
                }
+               if(containerView.getGameMode()==3){
+                   isProcessing=false;
+                   return;
+               }
                if(isExerciseFinish==false){
                        
                     containerView.setBackButtonEnabled();
                     containerView.setResetButtonEnabled();
                }
+               isProcessing=false;
+               
                
             }
         }.execute();

@@ -62,7 +62,7 @@ public class StockFish {
                 } else if (line.contains("score mate")) {
                     // Si hay una ventaja de mate inminente
                     int scoreMate = line.indexOf("score mate") + 11;
-                    evaluationMate = " mate en " + "<span style='color:green; font-size:16pt;'>"+line.substring(scoreMate).split(" ")[0]+"</span>";
+                    evaluationMate =line.substring(scoreMate).split(" ")[0];
                 }
             }
             if (line.startsWith("bestmove")) {

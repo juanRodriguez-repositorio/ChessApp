@@ -20,7 +20,7 @@ import Model.OutPuts;
  */
 public class ChessExercisesController {
     private static StockFish stockFish;
-    private static int actualStepInExercise;
+    private static int actualStepInExercise=-1;
     private static int totalStepsInExercise=0;
     private static String sideOfUser;
     private static String sideOfMachine;
@@ -37,8 +37,55 @@ public class ChessExercisesController {
             System.err.println("Error al iniciar StockFish");
         }
     }
-    public static void EvaluatePosition(String fenBefore, String fenAfter,String whoMove,ExercisesView window,boolean isEngine,ChessBoard board)throws ParseException{
+    public static void EvaluateFreePosition(String fenBefore,String fenAfter,String whoMove,ExercisesView window,boolean isEngine)throws ParseException{
+        try{
+            
+            String[] evaluationBefore=stockFish.getEvaluation(fenBefore);
+            String[] evaluationAfter=stockFish.getEvaluation(fenAfter);
+            NumberFormat format = NumberFormat.getInstance(Locale.FRANCE);
+            window.endLoading();
+            if(evaluationAfter[2].equals("")!=true){
+                int mateStatusAfter=Integer.parseInt(evaluationAfter[2]);
+                if(whoMove.equalsIgnoreCase("WHITE")){
+                    System.out.println("here");
+                    mateStatusAfter=mateStatusAfter*-1;
+                }
+                window.showMessage("Gran movimiento, hay mate en "+"<span style=\"color:green; font-size:16pt;\">"+mateStatusAfter+"</span>");
+                return;   
+            }
+            
+            double evaluationNumberBefore=format.parse(evaluationBefore[1]).doubleValue();
+            double evaluationNumberAfter=format.parse(evaluationAfter[1]).doubleValue();
+            double absoluteEvaluation=Math.abs(evaluationNumberBefore-evaluationNumberAfter);
+            if(whoMove.equalsIgnoreCase("WHITE")){
+                System.out.println("here");
+                evaluationNumberAfter=evaluationNumberAfter*-1;
+            }else{
+                evaluationNumberBefore=evaluationNumberBefore*-1;
+            }
+            if(absoluteEvaluation>0.3){
+                window.showMessage(buildMessage("Execelente movimiento! "," sigue asi! <br>"+OutPuts.getGoodMoveMessage(),evaluationNumberAfter,evaluationBefore[0]));
+            }else if(absoluteEvaluation>=0.3 && absoluteEvaluation<1){
+                window.showMessage(buildMessage("No es un movimiento perdedor, pero no es lo mejor "," vamos! <br>"+OutPuts.getNotBadMoveMessage(),evaluationNumberAfter,evaluationBefore[0]));
+            }else if(absoluteEvaluation>=1 && absoluteEvaluation<2){
+                window.showMessage(buildMessage("mmm... mal movimiento "," puedes mejorar!<br>"+OutPuts.getSlightlyBadMoveMessage(),evaluationNumberAfter,evaluationBefore[0]));
+            }else if(absoluteEvaluation>=2 && absoluteEvaluation<4){
+                window.showMessage(buildMessage("Grave error! "," sigue intentando<br>"+OutPuts.badFreeMoveMessage(),evaluationNumberAfter,evaluationBefore[0]));
+            }else{
+                window.showMessage(buildMessage("!Oh NO, muuuy mal movimiento !"," tienes que mejorar!<br>"+OutPuts.verybadMoveMessage(),evaluationNumberAfter,evaluationBefore[0]));
+            }
+            window.setEnabledMoveMachine();
+        }catch (IOException e) {
+            e.printStackTrace();
+            System.err.println("Error al iniciar StockFish");
+        }
+        
        
+        
+    }
+    public static void EvaluatePosition(String fenBefore, String fenAfter,String whoMove,ExercisesView window,boolean isEngine,ChessBoard board)throws ParseException{
+        
+        
         try {
             if(sideOfMachine.equalsIgnoreCase(whoMove)){
                 window.setDisabledMoveMachine();
@@ -46,9 +93,19 @@ public class ChessExercisesController {
             String[] evaluationBefore=stockFish.getEvaluation(fenBefore);
             String[] evaluationAfter=stockFish.getEvaluation(fenAfter);
             NumberFormat format = NumberFormat.getInstance(Locale.FRANCE);
+            window.endLoading();
             if(evaluationBefore[2].equals("")!=true){
-                double evaluationNumberAfter=format.parse(evaluationAfter[1]).doubleValue();
+          
                 if(evaluationAfter[2].equals("")!=true){
+                    int mateStatusBefore=Integer.parseInt(evaluationBefore[2]);
+                    int mateStatusAfter=Integer.parseInt(evaluationAfter[2]);
+                    if(whoMove.equalsIgnoreCase("WHITE")){
+                        System.out.println("here");
+                        mateStatusAfter=mateStatusAfter*-1;
+                    }else{
+                        mateStatusBefore=mateStatusBefore*-1;
+                    }
+                    System.out.println("si paso el segundo filtro");
                     goAheadInSteps();
                     if(totalStepsInExercise==actualStepInExercise){
                         window.showMessage(OutPuts.getCompletedExerciseMessage());
@@ -58,19 +115,30 @@ public class ChessExercisesController {
                         return;
                     }
                     if(whoMove.equalsIgnoreCase(sideOfUser)){
-                        if(Integer.parseInt(evaluationAfter[2].trim().split(" ")[2])==0){
+                        if(mateStatusAfter==0){
+                            System.out.println("jaque mate");
                             window.showMessage("Genial, lo completaste, jaque mate!!");
                             window.setNextButtonEnabled();
                             window.setBackButtonDisabled();
                             board.setIsExerciseFinish(true);      
                             return;
                         }
-                        window.showMessage("Gran movimiento, tienes "+evaluationAfter[2]);
+                        if((mateStatusBefore>0 && mateStatusAfter>0)||(mateStatusBefore>0 && mateStatusAfter>0)){
+                            window.showMessage("Gran movimiento, tienes mate en "+"<span style=\"color:green; font-size:16pt;\">"+mateStatusAfter+"</span>");
+                            return;
+                        }else{
+                            window.showMessage("opps...error, mala jugada, dejaste mate en "+"<span style=\"color:green; font-size:16pt;\">"+mateStatusAfter+"</span>");
+                            window.getBack(fenBefore);
+                            return;
+                        }
                     }else{
-                        window.showMessage("Movimiento de tu oponente: "+"<span style='color:blue; font-size:16pt;'>" +evaluationAfter[1]+"</span>"+evaluationAfter[2]);
+                        System.out.println("aqui no deberia estar");
+                        window.showMessage("Movimiento de tu oponente: "+"<span style='color:blue; font-size:16pt;'>" +evaluationAfter[1]+"</span>"+"<span style=\"color:green; font-size:16pt;\">"+evaluationAfter[2]+"</span>");
                     }
+                    System.out.println("pasa algo con whoMove");
                     return;
                 }
+                double evaluationNumberAfter=format.parse(evaluationAfter[1]).doubleValue();
                 if(whoMove.equalsIgnoreCase("WHITE")){
                     System.out.println("here");
                     evaluationNumberAfter=evaluationNumberAfter*-1;
@@ -83,15 +151,46 @@ public class ChessExercisesController {
                     }
                 }else{
                     if(evaluationNumberAfter<-8){
-                        window.showMessage("Buen movimiento, aunque desaprovechaste una oportunidad de"+evaluationAfter[2]);
+                        window.showMessage("Buen movimiento, aunque desaprovechaste una oportunidad de mate en "+"<span style=\"color:green; font-size:16pt;\">"+Integer.parseInt(evaluationBefore[2])*-1+"</span>");
                     }else{
                         window.showMessage(buildMessage("opps... Error! "," inténtalo de nuevo!<br>"+OutPuts.getBadMoveMessage(),evaluationNumberAfter,evaluationBefore[0]));
                         window.getBack(fenBefore);
                         return;
                     }
                 }
-                
+                return;
             
+            }
+            if(evaluationAfter[2].equals("")!=true){
+                double evaluationNumberBefore=format.parse(evaluationBefore[1]).doubleValue();
+                int mateStatusAfter=Integer.parseInt(evaluationAfter[2]);
+                if(whoMove.equalsIgnoreCase("WHITE")){
+                    System.out.println("here");
+                    mateStatusAfter=mateStatusAfter*-1;
+                }else{
+                    evaluationNumberBefore=evaluationNumberBefore*-1;
+                }
+                if(whoMove.equalsIgnoreCase("WHITE")){
+                    if(evaluationNumberBefore<0){
+                        window.showMessage("opps...error, mala jugada, dejaste mate en "+"<span style=\"color:green; font-size:16pt;\">"+mateStatusAfter+"</span>");
+                        window.getBack(fenBefore);
+                        return;
+                    }else{
+                        window.showMessage("Brillante!!, mate en "+"<span style=\"color:green; font-size:16pt;\">"+mateStatusAfter+"</span>");
+                        return;
+                    }
+                    
+                }else{
+                    if(evaluationNumberBefore>0){
+                        window.showMessage("opps...error, mala jugada, dejaste mate en "+"<span style=\"color:green; font-size:16pt;\">"+mateStatusAfter+"</span>");
+                        window.getBack(fenBefore);
+                        return;
+                    }else{
+                        window.showMessage("Brillante!!, mate en "+"<span style=\"color:green; font-size:16pt;\">"+mateStatusAfter+"</span>");
+                        return;
+                    }
+                    
+                }
             }
             double evaluationNumberBefore=format.parse(evaluationBefore[1]).doubleValue();
             double evaluationNumberAfter=format.parse(evaluationAfter[1]).doubleValue();
@@ -102,9 +201,6 @@ public class ChessExercisesController {
             }else{
                 evaluationNumberBefore=evaluationNumberBefore*-1;
             }
-            window.endLoading();
-            System.out.println("antes: "+evaluationNumberBefore);
-            System.out.println("despues: "+evaluationNumberAfter);
             if(isEngine){
                 bestMoveInActualPosition=evaluationAfter[0];
                 window.doEngineMoveInboard(bestMoveInActualPosition);
@@ -188,6 +284,7 @@ public class ChessExercisesController {
     }
     private static void goAheadInSteps(){
         actualStepInExercise++;
+        System.out.println("se ejucuta de marravilla");
     }
     private static void showMessageOpposideSide(double evaluationNumberBefore,double evaluationNumberAfter,ExercisesView window,String fenBefore,String opponentMove,boolean isEngine){
         if(isEngine){
