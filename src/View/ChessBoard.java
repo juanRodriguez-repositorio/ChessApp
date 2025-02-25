@@ -205,6 +205,12 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
         if(containerView.getGameMode()==-1 || isProcessing || containerView.getIsLoadingList()){
             return;
         }
+        if(isExerciseFinish==true){
+            System.out.println("WOOOOOOW");
+        }
+        if(ChessExercisesController.canDoMove()==false){
+            System.out.println("quuuuueeeeee");
+        }
         if (board.isMoveLegal(move, true) && verifyMove(fromSquare,toSquare) && isProcessing==false && isGettingBackInPosition==false && ChessExercisesController.canDoMove() && isExerciseFinish==false) {
                 
                 try {
@@ -220,7 +226,7 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
                     System.out.println("suma  uno "+fenHistoralIndex);
                     System.out.println(board.getSideToMove().toString());
                      // Ejecutar Stockfish en segundo plano
-                     startingProcessOfDoMove(fenBefore,fenAfter,whoMove,isEngine);
+                     startingProcessOfDoMove(fenBefore,fenAfter,whoMove,isEngine,move.toString().toLowerCase());
                 } catch (MoveException ex) {
                     System.err.println("Movimiento inválido: " + ex.getMessage());
                 }
@@ -229,10 +235,11 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
         
     
     }
-    private void startingProcessOfDoMove(String fenBefore, String fenAfter,String whoMove,boolean isEngine){
+    private void startingProcessOfDoMove(String fenBefore, String fenAfter,String whoMove,boolean isEngine,String move){
         isProcessing=true;
-        if(containerView.getGameMode()!=3){
-            containerView.setBackButtonDisabled();
+        int mode=containerView.getGameMode();
+        containerView.setBackButtonDisabled();
+        if(mode!=3){
             containerView.setResetButtonDisabled();
         }
         new SwingWorker<Void, Void>() {
@@ -244,7 +251,7 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
                     ChessExercisesController.EvaluateFreePosition(fenBefore,fenAfter,whoMove,containerView,isEngine);
                     return null;
                 }
-                ChessExercisesController.EvaluatePosition(fenBefore, fenAfter,whoMove,containerView,isEngine,ChessBoard.this);
+                ChessExercisesController.EvaluatePosition(fenBefore, fenAfter,whoMove,containerView,isEngine,ChessBoard.this,move);
                 return null;
             }
 
@@ -256,7 +263,9 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
                    System.out.println("se Ejecuta");
                    repaint();
                }
-               if(containerView.getGameMode()==3){
+               if(mode==3){
+                   containerView.setBackButtonEnabled();
+                   containerView.setEnabledMoveMachine();
                    isProcessing=false;
                    return;
                }
@@ -265,16 +274,22 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
                     containerView.setBackButtonEnabled();
                     containerView.setResetButtonEnabled();
                }
+              
                isProcessing=false;
                
                
             }
         }.execute();
     }
-    public void doEngineMove(){
+    public void doEngineMove(int type){
         String lastFen;
         String secondLastFen;
         String whoMove;
+        if(fenHistoral.size()>=1 && type==3){
+            lastFen = fenHistoral.get(fenHistoral.size() - 1);
+            whoMove=board.getSideToMove().toString();
+            startingProcessOfDoMove(null,lastFen,whoMove,true,null);
+        }
         if (fenHistoral.size() >= 2) { // Asegurarse de que hay al menos dos elementos
             lastFen = fenHistoral.get(fenHistoral.size() - 1);      // Último elemento
             secondLastFen = fenHistoral.get(fenHistoral.size() - 2); // Penúltimo elemento
@@ -282,7 +297,7 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
             return;
         }
         whoMove=board.getSideToMove().toString();
-        startingProcessOfDoMove(secondLastFen,lastFen,whoMove,true);
+        startingProcessOfDoMove(secondLastFen,lastFen,whoMove,true,null);
         
         
     }

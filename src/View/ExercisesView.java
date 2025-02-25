@@ -280,7 +280,7 @@ public class ExercisesView extends JFrame {
             return;
         }
         machineMoveButton.setEnabled(false);
-        ChessExercisesController.doEngineMove(chessBoard);
+        ChessExercisesController.doEngineMove(chessBoard,gameMode);
     }
     public void setEnabledMoveMachine(){
         machineMoveButton.setEnabled(true);
@@ -310,22 +310,22 @@ public class ExercisesView extends JFrame {
         if(isLoading || chessBoard.getIsProcessing()){
             return;
         }
-        if (index < listModel.getSize() - 1) {
-            index++;
-            gamesList.setSelectedIndex(index);
-            gamesList.ensureIndexIsVisible(index);
-            exerciseSelected=exercises[index];
-            chessBoard.updateBoard(exerciseSelected.getFen(),true);
-            ChessExercisesController.setStepsInExercise(exerciseSelected.getMovesForward(),chessBoard.getSideOfUser());
-            setNextButtonDisabled();
-            setResetButtonEnabled();
-            setBackButtonEnabled();
-            setDisabledMoveMachine();
-            chessBoard.setIsExerciseFinish(false);
-            showMessage("Vamos! "+exerciseSelected.getAim()+" Dificultad: "+showDificulty(exerciseSelected.getLevel()));
-        } else {
-            JOptionPane.showMessageDialog(null, "Fin de la lista");
-        }
+        if ((index < listModel.getSize() - 1)==false){
+            index=-1;
+        } 
+        index++;
+        gamesList.setSelectedIndex(index);
+        gamesList.ensureIndexIsVisible(index);
+        exerciseSelected=exercises[index];
+        chessBoard.updateBoard(exerciseSelected.getFen(),true);
+        ChessExercisesController.setStepsInExercise(exerciseSelected.getMovesForward(),chessBoard.getSideOfUser());
+        setNextButtonDisabled();
+        setResetButtonEnabled();
+        setBackButtonEnabled();
+        setDisabledMoveMachine();
+        chessBoard.setIsExerciseFinish(false);
+        showMessage("Vamos! "+exerciseSelected.getAim()+" Dificultad: "+showDificulty(exerciseSelected.getLevel()));
+        
     }
     private void styleButtonLightGreen(JButton button){
         button.setBackground(new Color(219, 244, 167));
@@ -533,6 +533,8 @@ public class ExercisesView extends JFrame {
         gameMode=3;
         listModel.clear();
         listModel.addElement("Análisis libre!");
+        showMessage("Análisis libre!");
+        chessBoard.updateBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", true);
         setNextButtonDisabled();
         setEnabledMoveMachine();
         setResetButtonDisabled();
