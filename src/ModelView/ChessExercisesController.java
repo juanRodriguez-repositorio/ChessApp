@@ -47,9 +47,13 @@ public class ChessExercisesController {
                     int mateStatusAfter=Integer.parseInt(evaluationAfter[2]);
                     mateStatusAfter=mateStatusAfter*-1;
                     if(mateStatusAfter==0){
+                        bestMoveInActualPosition=evaluationAfter[0];
+                        window.doEngineMoveInboard(bestMoveInActualPosition);
                         window.showMessage("Jaque mate!");
                         return;
                     }
+                    bestMoveInActualPosition=evaluationAfter[0];
+                    window.doEngineMoveInboard(bestMoveInActualPosition);
                     window.showMessage("hay mate en "+"<span style=\"color:green; font-size:16pt;\">"+mateStatusAfter+"</span>");
                     return;   
                 }
@@ -312,6 +316,7 @@ public class ChessExercisesController {
         
     }
     public static void doEngineMove(ChessBoard board,int type){
+        System.out.println("se ejecuta rapido o lento?");
         board.doEngineMove(type);
         
     }
@@ -417,6 +422,9 @@ public class ChessExercisesController {
                  "<b>Mejor jugada en la posición: </b>"+"<span style='color:blue; font-size:16pt;'>" + evaluationMove  +"</span> "+
                  "<b>Evaluación de la posición: </b>" +"<span style='color:green; font-size:16pt;'>"+ evaluationNumber  +"</span> "+
                 finalString;
+    }
+    public static void init(){
+        
     }
     
     

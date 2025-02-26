@@ -18,6 +18,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import javax.swing.border.EmptyBorder;
 
+
 public class ExercisesView extends JFrame {
     private JLabel messageLabel;
     private boolean isLoading;
@@ -184,6 +185,8 @@ public class ExercisesView extends JFrame {
 
         setLocationRelativeTo(null); // Centra la ventana
         setVisible(true);
+        ChessExercisesController.init();
+        
     }
 
     public void showMessage(String outPut) {
@@ -280,6 +283,12 @@ public class ExercisesView extends JFrame {
             return;
         }
         machineMoveButton.setEnabled(false);
+        if(gameMode==3){
+            backButton.setEnabled(false);
+            System.out.println("hola");
+            SwingUtilities.invokeLater(()->ChessExercisesController.doEngineMove(chessBoard,gameMode));
+            return;
+        }
         ChessExercisesController.doEngineMove(chessBoard,gameMode);
     }
     public void setEnabledMoveMachine(){
@@ -533,12 +542,12 @@ public class ExercisesView extends JFrame {
         gameMode=3;
         listModel.clear();
         listModel.addElement("Análisis libre!");
-        showMessage("Análisis libre!");
         chessBoard.updateBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", true);
         setNextButtonDisabled();
         setEnabledMoveMachine();
         setResetButtonDisabled();
         setBackButtonEnabled();
+        showMessage("Análisis libre!");
     }
     private String showDificulty(String dificulty){
         if(dificulty.equalsIgnoreCase("fácil")){

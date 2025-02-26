@@ -11,13 +11,11 @@ package ModelView;
 public class User {
 
     private String name;
-    private int elo;
-    private String theme;
+    private String password;
     
-    public User(String name,int elo,String theme){
-         this.setName(name);
-         this.setElo(elo);
-         this.setTheme(theme);
+    public User(String name,String password){
+         this.name=name;
+         this.password=password;
     }
     public User(){}
 
@@ -28,21 +26,13 @@ public class User {
     public void setName(String name) {
         this.name = name;
     }
-
-    public int getElo() {
-        return elo;
+    public void setPassword(String password){
+        this.password= password;
     }
-
-    public void setElo(int elo) {
-        this.elo = elo;
+    public String getPassword(){
+        return password;
     }
-    public String getTheme() {
-        return theme;
-    }
-
-    public void setTheme(String theme) {
-        this.theme = theme;
-    }
+    
 
    
 }

@@ -238,10 +238,14 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
     private void startingProcessOfDoMove(String fenBefore, String fenAfter,String whoMove,boolean isEngine,String move){
         isProcessing=true;
         int mode=containerView.getGameMode();
-        containerView.setBackButtonDisabled();
+        
         if(mode!=3){
+            containerView.setBackButtonDisabled();
             containerView.setResetButtonDisabled();
+        }else{
+            containerView.setDisabledMoveMachine();
         }
+        System.out.println("aquiesta..");
         new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() throws Exception {
@@ -289,6 +293,7 @@ public class ChessBoard extends JPanel implements MouseListener, MouseMotionList
             lastFen = fenHistoral.get(fenHistoral.size() - 1);
             whoMove=board.getSideToMove().toString();
             startingProcessOfDoMove(null,lastFen,whoMove,true,null);
+            return;
         }
         if (fenHistoral.size() >= 2) { // Asegurarse de que hay al menos dos elementos
             lastFen = fenHistoral.get(fenHistoral.size() - 1);      // Último elemento

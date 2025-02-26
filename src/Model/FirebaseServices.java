@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
+import View.AuthView;
 
 /**
  *
@@ -33,7 +34,7 @@ public class FirebaseServices {
         
         try {
             // Verificar que el archivo JSON existe
-            File file = new File("C:/Users/kamus/Documents/NetBeansProjects/ChessApp/Credentials/admin-key.json");
+            File file = new File("C:/Users/kamus/Documents/NetBeansProjects/ChessApp/Credentials/chessApp-key-json.json");
             if (!file.exists()) {
                 System.out.println("Error: El archivo de credenciales no existe en la ruta especificada.");
                 return;
@@ -42,7 +43,7 @@ public class FirebaseServices {
             
             // Configuración de Firebase
             FirebaseOptions firebaseOptions = new FirebaseOptions.Builder()
-                    .setCredentials(GoogleCredentials.fromStream(new FileInputStream("C:\\Users\\kamus\\Documents\\NetBeansProjects\\ChessApp\\Credentials\\admin-key.json")))
+                    .setCredentials(GoogleCredentials.fromStream(new FileInputStream("C:\\Users\\kamus\\Documents\\NetBeansProjects\\ChessApp\\Credentials\\chessApp-key-json.json")))
                     .setDatabaseUrl("https://chessapp-dbab6-default-rtdb.firebaseio.com/")
                 
                     .build();
@@ -56,12 +57,11 @@ public class FirebaseServices {
             ex.printStackTrace();
         }
     };
-    public static void pushUser(User user) {
+    public static void pushUser(User user, AuthView view) {
         if (user == null) {
             System.out.println("El usuario es null, no se puede guardar.");
             return;
         }
-
         // Inicializa Firebase
         System.out.println("Inicializando Firebase...");
         initFirebase();
@@ -72,97 +72,106 @@ public class FirebaseServices {
             return;
         }
 
-        // Obtiene la referencia a la ruta /users
-        DatabaseReference userReference = firebaseDatabase.getReference("users");
+        // Obtiene la referencia a la ruta /users con el nombre del usuario como clave
+        DatabaseReference userReference = firebaseDatabase.getReference("users").child(user.getName());
 
-        // Crea un CountDownLatch para esperar que Firebase complete la escritura
-        CountDownLatch countDownLatch = new CountDownLatch(1);
-
-        // Intenta guardar el usuario
-        System.out.println("Guardando el usuario...");
-        try {
-            // Push para agregar el usuario a la base de datos
-            userReference.push().setValue(user, new DatabaseReference.CompletionListener() {
-                @Override
-                public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-                    if (databaseError != null) {
-                        System.out.println("Error al guardar el usuario: " + databaseError.getMessage());
-                        System.out.println("Detalles: " + databaseError.getDetails());
-                    } else {
-                        System.out.println("Usuario guardado exitosamente con ID: " + databaseReference.getKey());
-                    }
-                    countDownLatch.countDown(); // Libera el CountDownLatch
-                }
-            });
-
-            // Espera hasta que Firebase complete la operación o se agote el tiempo
-            if (!countDownLatch.await(1000, TimeUnit.SECONDS)) {
-                System.out.println("Tiempo de espera agotado: Firebase no respondió.");
-            }
-        } catch (Exception e) {
-            System.out.println("Error inesperado durante la operación de guardado:");
-            e.printStackTrace();
-        }
-    };
-    
-    public static User getUserById(String firebaseId) {
-    // Verifica si el firebaseId es válido
-    if (firebaseId == null || firebaseId.isEmpty()) {
-        System.out.println("El ID del usuario es null o vacío, no se puede buscar.");
-        return null;
-    }
-
-    // Inicializa Firebase
-    System.out.println("Inicializando Firebase...");
-    initFirebase();
-
-    // Verifica que la conexión a Firebase haya sido exitosa
-    if (firebaseDatabase == null) {
-        System.out.println("Error: FirebaseDatabase es null, no se puede continuar.");
-        return null;
-    }
-
-    // Obtiene la referencia a la ruta /users
-    DatabaseReference userReference = firebaseDatabase.getReference("users");
-
-    // Crea un CountDownLatch para esperar que Firebase complete la lectura
-    CountDownLatch countDownLatch = new CountDownLatch(1);
-
-    // Contenedor para almacenar el usuario recuperado
-    final User[] retrievedUser = new User[1];
-
-    // Intentamos obtener el usuario por su ID de Firebase
-    System.out.println("Buscando el usuario con ID Firebase: " + firebaseId);
-    try {
-        userReference.child(firebaseId).addListenerForSingleValueEvent(new ValueEventListener() {
+        // Verifica si el usuario ya existe
+        userReference.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
-                    // Si el usuario existe, lo mapeamos al objeto User
-                    retrievedUser[0] = dataSnapshot.getValue(User.class);
+                    view.showErrorMessage("El usuario ya existe intenta con otro.");
+                    System.out.println("El usuario ya existe: " + user.getName());
                 } else {
-                    System.out.println("Usuario con ID Firebase " + firebaseId + " no encontrado.");
+                    // Si el usuario no existe, lo guarda
+                    userReference.setValue(user, new DatabaseReference.CompletionListener() {
+                        @Override
+                        public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
+                            if (databaseError != null) {
+                                view.showErrorMessage("Error al registrar el usuario, intenta más tarde");
+                                System.out.println("Error al guardar el usuario: " + databaseError.getMessage());
+                            } else {
+                                view.showGoodRegisting();
+                                System.out.println("Usuario guardado exitosamente con nombre: " + user.getName()+", inicia sesión");
+                            }
+                        }
+                    });
                 }
-                countDownLatch.countDown(); // Liberamos el CountDownLatch
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-                System.out.println("Error al buscar el usuario: " + databaseError.getMessage());
-                countDownLatch.countDown(); // Liberamos el CountDownLatch en caso de error
+                view.showErrorMessage("Error al registrar el usuario, intenta más tarde");
+                System.out.println("Error al verificar el usuario: " + databaseError.getMessage());
             }
         });
+    } 
 
-        // Esperamos hasta que Firebase complete la operación o se agote el tiempo
-        if (!countDownLatch.await(1000, TimeUnit.SECONDS)) {
-            System.out.println("Tiempo de espera agotado: Firebase no respondió.");
+    public static User getUser(String name,AuthView view) {
+        // Verifica si el firebaseId es válido
+        if (name == null || name.isEmpty()) {
+            System.out.println("El ID del usuario es null o vacío, no se puede buscar.");
+            return null;
         }
-    } catch (Exception e) {
-        System.out.println("Error inesperado durante la operación de obtención:");
-        e.printStackTrace();
-    }
 
-    // Devolvemos el usuario recuperado o null si no se encontró
-    return retrievedUser[0];
+        // Inicializa Firebase
+        System.out.println("Inicializando Firebase...");
+        initFirebase();
+
+        // Verifica que la conexión a Firebase haya sido exitosa
+        if (firebaseDatabase == null) {
+            System.out.println("Error: FirebaseDatabase es null, no se puede continuar.");
+            return null;
+        }
+
+        // Obtiene la referencia a la ruta /users
+        DatabaseReference userReference = firebaseDatabase.getReference("users");
+
+        // Crea un CountDownLatch para esperar que Firebase complete la lectura
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+
+        // Contenedor para almacenar el usuario recuperado
+        final User[] retrievedUser = new User[1];
+
+        // Intentamos obtener el usuario por su ID de Firebase
+        System.out.println("Buscando el usuario con el nombre Firebase: " + name);
+        try {
+            userReference.child(name).addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    if (dataSnapshot.exists()) {
+                        // Si el usuario existe, lo mapeamos al objeto User
+                        retrievedUser[0] = dataSnapshot.getValue(User.class);
+                    } else {
+                        view.showErrorMessage("El usuario "+"'"+name+"'"+" no existe");
+                        System.out.println("Usuario con ID Firebase " + name + " no encontrado.");
+                    }
+                    countDownLatch.countDown(); // Liberamos el CountDownLatch
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+                    view.showErrorMessage("Error al iniciar sesión, intenta más tarde");
+                    System.out.println("Error al buscar el usuario: " + databaseError.getMessage());
+                    countDownLatch.countDown(); // Liberamos el CountDownLatch en caso de error
+                }
+            });
+
+            // Esperamos hasta que Firebase complete la operación o se agote el tiempo
+            if (!countDownLatch.await(1000, TimeUnit.SECONDS)) {
+                view.showErrorMessage("Error al iniciar sesión, intenta más tarde");
+                System.out.println("Tiempo de espera agotado: Firebase no respondió.");
+            }
+        } catch (Exception e) {
+            view.showErrorMessage("Error al iniciar sesión, intenta más tarde");
+            System.out.println("Error inesperado durante la operación de obtención:");
+            e.printStackTrace();
+        }
+
+        // Devolvemos el usuario recuperado o null si no se encontró
+        return retrievedUser[0];
     }
+    public static void init(){}
+    
+    
 }
