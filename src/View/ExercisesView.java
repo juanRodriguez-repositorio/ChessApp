@@ -45,12 +45,34 @@ public class ExercisesView extends JFrame {
         messageLabel.setVerticalAlignment(SwingConstants.CENTER);
         setTitle("Chess Exercises");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(900, 700);
+        setSize(900, 740);
         setLayout(new BorderLayout(10, 10));
 
         // Panel del tablero de ajedrez
         chessBoard = new ChessBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", this);
         
+        // Menú
+        JMenuBar menuBar = new JMenuBar();
+        JMenu menu = new JMenu("Navegación");
+        menu.setForeground(new Color(10, 10, 10));
+        JMenuItem exercisesItem = new JMenuItem("Ejercicios");
+        exercisesItem.addActionListener(e -> {
+   
+        });
+
+        JMenuItem resourcesItem = new JMenuItem("Recursos");
+        resourcesItem.addActionListener(e -> {
+           dispose();
+           SwingUtilities.invokeLater(()->new ChessResourcesView());
+        });
+
+        menu.add(exercisesItem);
+        menu.add(resourcesItem);
+        menuBar.add(menu);
+        menuBar.setBackground(new Color(162, 210, 187));
+        menuBar.setBorder(BorderFactory.createMatteBorder(0, 0, 20, 0, new Color(213, 249, 222))); // Solo línea inferior negra de 2px
+        setJMenuBar(menuBar);
+
         
         //botones de ejercicios
         tacticsButton=new JButton("Tacticas");

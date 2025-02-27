@@ -14,6 +14,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import ModelView.AuthController;
 
 public class AuthView extends JFrame {
@@ -98,15 +100,6 @@ public class AuthView extends JFrame {
         gbc.gridwidth = 2;
         gbc.anchor = GridBagConstraints.CENTER;
         formPanel.add(loginButton, gbc);
-
-        registerButton = new JButton("Register");
-        registerButton.addActionListener(e -> registerUser());
-        styleButtonWhite(registerButton);
-        registerButton.setPreferredSize(new Dimension(100,35));
-        gbc.gridy = 4;
-        formPanel.add(registerButton, gbc);
-
-        add(formPanel, BorderLayout.CENTER);
         
         
         registerButton = new JButton("Register");
@@ -118,7 +111,7 @@ public class AuthView extends JFrame {
 
         add(formPanel, BorderLayout.CENTER);
         loginButton.setFocusable(false);
-        registerButton.setFocusable(false);
+        registerButton.setFocusable(false); 
         AuthController.init();
     }
     private void styleButtonWhite(JButton button) {
@@ -161,9 +154,11 @@ public class AuthView extends JFrame {
                if (button.getBackground() != new Color(255,255,255)) {
                     //button.setBackground(hoverColor);
                     UIManager.put("Button.select",new Color(230,230,230));
+                   
                     } else {
                       //button.setBackground(backgroundColor);
                       UIManager.put("Button.select",new Color(255,255,255));
+                      
                     }
             
                 } // Restaurar el color original al soltar el clic
@@ -210,9 +205,11 @@ public class AuthView extends JFrame {
                 if (button.getBackground() != new Color(219, 244, 167)) {
                      //button.setBackground(hoverColor);
                      UIManager.put("Button.select",new Color(200, 233, 143));
+                     
                      } else {
                        //button.setBackground(backgroundColor);
                        UIManager.put("Button.select",new Color(219, 244, 167));
+                       
                      }
             
                 } // Restaurar el color original al soltar el clic
@@ -235,11 +232,15 @@ public class AuthView extends JFrame {
     public void showErrorMessage(String message){
         isLoading=false;
         showMessage("<span style='color:rgb(231, 76, 60);'>"+message+"</span>");
+        nameField.setFocusable(true);
+        passwordField.setFocusable(true);
         styleEnabledLightGreenButton(loginButton);
         styleEnabledWhiteButton(registerButton);
     }
     public void showLoadingMessage(int type){
         isLoading = true;
+        nameField.setFocusable(false);
+        passwordField.setFocusable(false);
         styleDisabledLightGreenButton(loginButton);
         styleDisabledWhiteButton(registerButton);
         this.type=type;
@@ -251,6 +252,8 @@ public class AuthView extends JFrame {
         nameField.setText("");
         passwordField.setText("");
         showMessage("<span style='color:rgb(46, 204, 113);'>"+"usuario registrado!, inicia sesión"+"</span>");
+        nameField.setFocusable(true);
+        passwordField.setFocusable(true);
         styleEnabledLightGreenButton(loginButton);
         styleEnabledWhiteButton(registerButton);
     }
