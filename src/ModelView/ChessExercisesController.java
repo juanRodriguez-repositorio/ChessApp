@@ -281,7 +281,7 @@ public class ChessExercisesController {
                     board.setIsExerciseFinish(true); 
                     return;
                 }
-                window.showMessage(buildMessage("Gran jugada! "," Siguente paso!<br>"+OutPuts.getGoodMoveMessage(),evaluationNumberAfter,evaluationBefore[0]));
+                window.showMessage(buildMessage("Gran jugada! "," Siguiente paso!<br>"+OutPuts.getGoodMoveMessage(),evaluationNumberAfter,evaluationBefore[0]));
                 window.setEnabledMoveMachine();
                 
             }
