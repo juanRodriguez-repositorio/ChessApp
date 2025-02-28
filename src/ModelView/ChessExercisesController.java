@@ -258,7 +258,7 @@ public class ChessExercisesController {
             if(isEngine){
                 bestMoveInActualPosition=evaluationAfter[0];
                 window.doEngineMoveInboard(bestMoveInActualPosition);
-                showMessageOpposideSide(evaluationNumberBefore,evaluationNumberAfter,window,fenBefore,evaluationBefore[0],isEngine,false);
+                showMessageOpposideSide(evaluationNumberBefore,evaluationNumberAfter,window,fenBefore,evaluationAfter[0],isEngine,false);
                 return;
             }
             if(whoMove.equalsIgnoreCase(sideOfMachine)){
@@ -422,6 +422,9 @@ public class ChessExercisesController {
                  "<b>Mejor jugada en la posición: </b>"+"<span style='color:blue; font-size:16pt;'>" + evaluationMove  +"</span> "+
                  "<b>Evaluación de la posición: </b>" +"<span style='color:green; font-size:16pt;'>"+ evaluationNumber  +"</span> "+
                 finalString;
+    }
+    public static void resetSteps(){
+        actualStepInExercise=0;
     }
     public static void init(){
         

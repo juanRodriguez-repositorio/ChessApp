@@ -562,6 +562,8 @@ public class ExercisesView extends JFrame {
             return;
         }
         gameMode=3;
+        chessBoard.setIsExerciseFinish(false);
+        ChessExercisesController.resetSteps();
         listModel.clear();
         listModel.addElement("Análisis libre!");
         chessBoard.updateBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", true);
