@@ -425,6 +425,7 @@ public class ChessExercisesController {
     }
     public static void resetSteps(){
         actualStepInExercise=0;
+        totalStepsInExercise=1;
     }
     public static void init(){
         
